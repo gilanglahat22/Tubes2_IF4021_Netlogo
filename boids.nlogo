@@ -17,15 +17,15 @@ to setup
 
   ; Initialize simulation parameters
   set num-turtles 200
-  set alignment-radius 8
-  set cohesion-radius 8
-  set separation-radius 2  ; Smaller radius for separation to avoid crowding
-  set heading-weight [0.7 0.1 0.2]  ; Weights for alignment, cohesion, and separation behaviors
+  set alignment-radius 2
+  set cohesion-radius 2
+  set separation-radius 0.5  ; Smaller radius for separation to avoid crowding
+  set heading-weight [5 1 1]  ; Weights for alignment, cohesion, and separation behaviors
 
   ; Create turtles at random positions and headings
   create-turtles num-turtles [
     setxy random-xcor random-ycor
-    set heading random 360
+    set heading 90
     set color blue
   ]
   reset-ticks
@@ -158,9 +158,26 @@ BUTTON
 80
 725
 128
-Go
+Play
 go
 T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+469
+144
+725
+192
+Step
+go
+NIL
 1
 T
 OBSERVER
