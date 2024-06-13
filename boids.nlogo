@@ -16,11 +16,11 @@ to setup
   clear-all
 
   ; Initialize simulation parameters
-  set num-turtles 200
+  set num-turtles 400
   set alignment-radius 12  ; Larger radius to encourage more widespread alignment
   set cohesion-radius 12   ; Larger radius to encourage group cohesion
   set separation-radius 2.4 ; Smaller radius for separation to avoid crowding
-  set heading-weight [8 1 1]  ; Strongly emphasize alignment and cohesion
+  set heading-weight [7 1 1]  ; Strongly emphasize alignment and cohesion
 
   ; Create turtles at random positions and headings
   create-turtles num-turtles [
