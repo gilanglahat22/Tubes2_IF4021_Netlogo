@@ -17,15 +17,15 @@ to setup
 
   ; Initialize simulation parameters
   set num-turtles 200
-  set alignment-radius 2
-  set cohesion-radius 2
-  set separation-radius 0.5  ; Smaller radius for separation to avoid crowding
-  set heading-weight [8 1 1]  ; Weights for alignment, cohesion, and separation behaviors
+  set alignment-radius 12  ; Larger radius to encourage more widespread alignment
+  set cohesion-radius 12   ; Larger radius to encourage group cohesion
+  set separation-radius 2.4 ; Smaller radius for separation to avoid crowding
+  set heading-weight [8 1 1]  ; Strongly emphasize alignment and cohesion
 
   ; Create turtles at random positions and headings
   create-turtles num-turtles [
     setxy random-xcor random-ycor
-    set heading random 360
+    set heading 90
     set color blue
   ]
   reset-ticks
@@ -44,62 +44,85 @@ end
 
 ; Calculate the average heading of nearby turtles for alignment
 to calculate-align-vector
-  let nearby-turtles turtles in-radius alignment-radius
+  let nearby-turtles other turtles in-radius alignment-radius
   ifelse any? nearby-turtles [
-    set align-vector mean [heading] of nearby-turtles
+    let avg-heading mean [heading] of nearby-turtles
+    set align-vector vector-scale 1 avg-heading
   ][
-    set align-vector heading  ; Maintain current heading if no nearby turtles
+    set align-vector vector-scale 1 heading  ; Maintain current heading if no nearby turtles
   ]
 end
 
 ; Calculate the average position of nearby turtles for cohesion
 to calculate-cohesion-vector
-  let nearby-turtles turtles in-radius cohesion-radius
+  let nearby-turtles other turtles in-radius cohesion-radius
   ifelse any? nearby-turtles [
     let avg-x mean [xcor] of nearby-turtles
     let avg-y mean [ycor] of nearby-turtles
 
-    ; Check if the calculated average position is the turtle's current position
-    ifelse (avg-x - xcor) = 0 and (avg-y - ycor) = 0 [
-      set cohesion-vector heading  ; Maintain current heading if no movement
+    ifelse (avg-x = xcor) and (avg-y = ycor) [
+      set cohesion-vector vector-scale 1 heading  ; Maintain current heading if no movement
     ][
-      ; Calculate vector towards the average position
-      set cohesion-vector atan (avg-x - xcor) (avg-y - ycor)
+      let direction towardsxy avg-x avg-y
+      set cohesion-vector vector-scale 1 direction  ; Calculate vector towards the average position
     ]
   ][
-    set cohesion-vector heading  ; Maintain current heading if no nearby turtles
+    set cohesion-vector vector-scale 1 heading  ; Maintain current heading if no nearby turtles
   ]
 end
 
 ; Calculate vector pointing away from nearby turtles for separation
 to calculate-separation-vector
-  let nearby-turtles turtles in-radius separation-radius
+  let nearby-turtles other turtles in-radius separation-radius
   ifelse any? nearby-turtles [
     let x-offsets mean [xcor - [xcor] of myself] of nearby-turtles
     let y-offsets mean [ycor - [ycor] of myself] of nearby-turtles
 
-    ; Check if the offsets result in a zero vector
-    ifelse x-offsets = 0 and y-offsets = 0 [
-      set separation-vector heading  ; Maintain current heading if centered among nearby turtles
+    ifelse (x-offsets = 0) and (y-offsets = 0) [
+      set separation-vector vector-scale 1 heading  ; Maintain current heading if centered among nearby turtles
     ][
-      ; Calculate vector pointing away from the average position of nearby turtles
-      set separation-vector (atan x-offsets y-offsets) + 180
+      let direction (atan x-offsets y-offsets) + 180
+      set separation-vector vector-scale 1 direction  ; Vector pointing away from the average position
     ]
   ][
-    set separation-vector heading  ; Maintain current heading if no nearby turtles
+    set separation-vector vector-scale 1 heading  ; Maintain current heading if no nearby turtles
   ]
 end
 
 ; Update turtle's heading based on weighted average of behavior vectors
 to update-heading
-  let align-component item 0 heading-weight * align-vector
-  let cohesion-component item 1 heading-weight * cohesion-vector
-  let separation-component item 2 heading-weight * separation-vector
-  let new-heading (align-component + cohesion-component + separation-component) / sum heading-weight
+  let align-component vector-scale (item 0 heading-weight) (vector-to-heading align-vector)
+  let cohesion-component vector-scale (item 1 heading-weight) (vector-to-heading cohesion-vector)
+  let separation-component vector-scale (item 2 heading-weight) (vector-to-heading separation-vector)
+
+  let combined-vector vector-sum align-component cohesion-component
+  set combined-vector vector-sum combined-vector separation-component
+
+  let new-heading vector-to-heading combined-vector
   set heading new-heading
+
   ;; Uncomment to debug
   ;; Significantly slows the simulation
   ;; show (list align-vector cohesion-vector separation-vector)
+end
+
+; Scales a vector by a given factor
+to-report vector-scale [factor temp_heading]
+  report (list (factor * cos temp_heading) (factor * sin temp_heading))
+end
+
+; Sums two vectors
+to-report vector-sum [vector1 vector2]
+  let x1 item 0 vector1
+  let y1 item 1 vector1
+  let x2 item 0 vector2
+  let y2 item 1 vector2
+  report (list (x1 + x2) (y1 + y2))
+end
+
+; Converts a vector to a heading
+to-report vector-to-heading [vector]
+  report atan (item 1 vector) (item 0 vector)
 end
 
 to move
