@@ -1,23 +1,27 @@
 globals [
   num-turtles
-  separation-radius
+  alignment-radius
   cohesion-radius
-  align-radius
+  separation-radius ; Added for separation behavior
+  heading-weight ; Adjusted to include weight for separation
 ]
 
 turtles-own [
-  velocity ;; Each turtle has its own velocity
+  align-vector
+  cohesion-vector
+  separation-vector ; Added for separation behavior
 ]
 
 to setup
   clear-all
-  ;; Initialize global variables
-  set num-turtles 75
-  set separation-radius 1
-  set cohesion-radius 3
-  set align-radius 1
 
-  ;; Create boids with random positions and directions, set them to blue
+  set num-turtles 200
+  set alignment-radius 8
+  set cohesion-radius 8
+  set separation-radius 2 ; Smaller radius for separation
+  set heading-weight [0.7 0.2 0.1] ; Adjust weights for alignment, cohesion, and separation
+
+  ; Create 100 turtles at random positions and headings
   create-turtles num-turtles [
     setxy random-xcor random-ycor
     set heading random 360
@@ -27,14 +31,66 @@ to setup
 end
 
 to go
-  ;; Main loop for boid behavior
   ask turtles [
-    align
-    cohere
-    ;;separate
+    calculate-align-vector
+    calculate-cohesion-vector
+    calculate-separation-vector ; Calculate separation vector
+    update-heading
     move
   ]
   tick
+end
+
+; Calculate the average heading of nearby turtles for alignment
+to calculate-align-vector
+  let nearby-turtles turtles in-radius alignment-radius
+  ifelse any? nearby-turtles [
+    set align-vector mean [heading] of nearby-turtles
+  ][
+    set align-vector heading
+  ]
+end
+
+; Calculate the average position of nearby turtles for cohesion
+to calculate-cohesion-vector
+  let nearby-turtles turtles in-radius cohesion-radius
+  ifelse any? nearby-turtles [
+    let avg-x mean [xcor] of nearby-turtles
+    let avg-y mean [ycor] of nearby-turtles
+
+    ifelse (avg-x - xcor) = 0 and (avg-y - ycor) = 0 [
+      set separation-vector heading ; If offsets are 0, maintain current heading
+    ][
+      set cohesion-vector atan (avg-x - xcor) (avg-y - ycor)
+    ]
+  ][
+    set cohesion-vector heading
+  ]
+end
+
+; Calculate the average vector pointing away from nearby turtles for separation
+to calculate-separation-vector
+  let nearby-turtles turtles in-radius separation-radius
+  ifelse any? nearby-turtles [
+    let x-offsets mean [xcor - [xcor] of myself] of nearby-turtles
+    let y-offsets mean [ycor - [ycor] of myself] of nearby-turtles
+    ifelse x-offsets = 0 and y-offsets = 0 [
+      set separation-vector heading ; If offsets are 0, maintain current heading
+    ][
+      set separation-vector (atan x-offsets y-offsets) + 180 ; Adjust direction to point away
+    ]
+  ][
+    set separation-vector heading
+  ]
+end
+
+; Update the turtle's heading based on the weighted average of alignment, cohesion, and separation
+to update-heading
+  let align-component item 0 heading-weight * align-vector
+  let cohesion-component item 1 heading-weight * cohesion-vector
+  let separation-component item 2 heading-weight * separation-vector
+  let new-heading (align-component + cohesion-component + separation-component) / sum heading-weight
+  set heading new-heading
 end
 
 to move
@@ -53,37 +109,6 @@ to move
   ]
   if ycor < min-pycor [
     set ycor max-pycor - (min-pycor - ycor - 1)
-  ]
-end
-
-to align
-  ;; Align heading with average heading of nearby flockmates
-  let flockmates other turtles in-radius align-radius
-  if any? flockmates [
-    let avg-heading mean [heading] of flockmates
-    set heading (heading * 0.9 + avg-heading * 0.1)
-  ]
-end
-
-to cohere
-  ;; Move towards the average position of nearby flockmates
-  let flockmates other turtles in-radius cohesion-radius
-  if any? flockmates [
-    let avg-x mean [xcor] of flockmates
-    let avg-y mean [ycor] of flockmates
-    let avg-heading towardsxy avg-x avg-y
-    set heading (heading * 0.75 + avg-heading * 0.25)
-    ;; right random 10 - 5 ;; Introduce some randomness
-  ]
-end
-
-to separate
-  ;; Move away from very close flockmates
-  if any? other turtles in-radius separation-radius [
-    let closest min-one-of other turtles in-radius separation-radius [distance myself]
-    face closest
-    right 180
-    fd 1
   ]
 end
 @#$#@#$#@

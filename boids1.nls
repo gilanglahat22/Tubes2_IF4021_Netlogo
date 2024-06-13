@@ -1,4 +1,5 @@
 globals [
+  num-turtles
   alignment-radius
   cohesion-radius
   separation-radius ; Added for separation behavior
@@ -13,13 +14,14 @@ turtles-own [
 
 to setup
   clear-all
+  set num-turtles 75
   set alignment-radius 10
   set cohesion-radius 15
   set separation-radius 5 ; Smaller radius for separation
   set heading-weight [0.33 0.33 0.34] ; Adjust weights for alignment, cohesion, and separation
   
   ; Create 100 turtles at random positions and headings
-  create-turtles 100 [
+  create-turtles num-turtles [
     setxy random-xcor random-ycor
     set heading random 360
     set shape "triangle"
@@ -34,7 +36,7 @@ to go
     calculate-cohesion-vector
     calculate-separation-vector ; Calculate separation vector
     update-heading
-    forward 1
+    move
   ]
   tick
 end
@@ -80,4 +82,23 @@ to update-heading
   let separation-component item 2 heading-weight * separation-vector
   let new-heading (align-component + cohesion-component + separation-component) / sum heading-weight
   set heading new-heading
+end
+
+to move
+  ;; Move forward by 1 step
+  fd 1
+  ;; Wrap horizontally
+  if xcor > max-pxcor [
+    set xcor min-pxcor + (xcor - max-pxcor - 1)
+  ]
+  if xcor < min-pxcor [
+    set xcor max-pxcor - (min-pxcor - xcor - 1)
+  ]
+  ;; Wrap vertically
+  if ycor > max-pycor [
+    set ycor min-pycor + (ycor - max-pycor - 1)
+  ]
+  if ycor < min-pycor [
+    set ycor max-pycor - (min-pycor - ycor - 1)
+  ]
 end
