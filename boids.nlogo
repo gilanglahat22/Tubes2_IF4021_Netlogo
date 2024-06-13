@@ -97,7 +97,9 @@ to update-heading
   let separation-component item 2 heading-weight * separation-vector
   let new-heading (align-component + cohesion-component + separation-component) / sum heading-weight
   set heading new-heading
-  show (list align-vector cohesion-vector separation-vector)
+  ;; Uncomment to debug
+  ;; Significantly slows the simulation
+  ;; show (list align-vector cohesion-vector separation-vector)
 end
 
 to move
