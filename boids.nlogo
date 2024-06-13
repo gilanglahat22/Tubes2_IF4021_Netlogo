@@ -25,7 +25,7 @@ to setup
   ; Create turtles at random positions and headings
   create-turtles num-turtles [
     setxy random-xcor random-ycor
-    set heading 90
+    set heading random 360
     set color blue
   ]
   reset-ticks
