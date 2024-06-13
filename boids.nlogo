@@ -20,12 +20,12 @@ to setup
   set alignment-radius 2
   set cohesion-radius 2
   set separation-radius 0.5  ; Smaller radius for separation to avoid crowding
-  set heading-weight [5 1 1]  ; Weights for alignment, cohesion, and separation behaviors
+  set heading-weight [8 1 1]  ; Weights for alignment, cohesion, and separation behaviors
 
   ; Create turtles at random positions and headings
   create-turtles num-turtles [
     setxy random-xcor random-ycor
-    set heading 90
+    set heading random 360
     set color blue
   ]
   reset-ticks
@@ -97,6 +97,7 @@ to update-heading
   let separation-component item 2 heading-weight * separation-vector
   let new-heading (align-component + cohesion-component + separation-component) / sum heading-weight
   set heading new-heading
+  show (list align-vector cohesion-vector separation-vector)
 end
 
 to move
