@@ -1,27 +1,28 @@
 globals [
-  num-turtles
-  alignment-radius
-  cohesion-radius
-  separation-radius ; Added for separation behavior
-  heading-weight ; Adjusted to include weight for separation
+  num-turtles         ; Total number of turtles
+  alignment-radius    ; Radius for alignment behavior
+  cohesion-radius     ; Radius for cohesion behavior
+  separation-radius   ; Radius for separation behavior
+  heading-weight      ; Weights for alignment, cohesion, and separation behaviors
 ]
 
 turtles-own [
-  align-vector
-  cohesion-vector
-  separation-vector ; Added for separation behavior
+  align-vector        ; Heading vector for alignment
+  cohesion-vector     ; Heading vector for cohesion
+  separation-vector   ; Heading vector for separation
 ]
 
 to setup
   clear-all
 
+  ; Initialize simulation parameters
   set num-turtles 200
   set alignment-radius 8
   set cohesion-radius 8
-  set separation-radius 2 ; Smaller radius for separation
-  set heading-weight [0.7 0.2 0.1] ; Adjust weights for alignment, cohesion, and separation
+  set separation-radius 2  ; Smaller radius for separation to avoid crowding
+  set heading-weight [0.7 0.1 0.2]  ; Weights for alignment, cohesion, and separation behaviors
 
-  ; Create 100 turtles at random positions and headings
+  ; Create turtles at random positions and headings
   create-turtles num-turtles [
     setxy random-xcor random-ycor
     set heading random 360
@@ -34,11 +35,11 @@ to go
   ask turtles [
     calculate-align-vector
     calculate-cohesion-vector
-    calculate-separation-vector ; Calculate separation vector
-    update-heading
-    move
+    calculate-separation-vector  ; Calculate vectors for each behavior
+    update-heading               ; Update heading based on behavior vectors
+    move                          ; Move turtle forward
   ]
-  tick
+  tick  ; Advance the simulation by one tick
 end
 
 ; Calculate the average heading of nearby turtles for alignment
@@ -47,7 +48,7 @@ to calculate-align-vector
   ifelse any? nearby-turtles [
     set align-vector mean [heading] of nearby-turtles
   ][
-    set align-vector heading
+    set align-vector heading  ; Maintain current heading if no nearby turtles
   ]
 end
 
@@ -58,33 +59,38 @@ to calculate-cohesion-vector
     let avg-x mean [xcor] of nearby-turtles
     let avg-y mean [ycor] of nearby-turtles
 
+    ; Check if the calculated average position is the turtle's current position
     ifelse (avg-x - xcor) = 0 and (avg-y - ycor) = 0 [
-      set separation-vector heading ; If offsets are 0, maintain current heading
+      set cohesion-vector heading  ; Maintain current heading if no movement
     ][
+      ; Calculate vector towards the average position
       set cohesion-vector atan (avg-x - xcor) (avg-y - ycor)
     ]
   ][
-    set cohesion-vector heading
+    set cohesion-vector heading  ; Maintain current heading if no nearby turtles
   ]
 end
 
-; Calculate the average vector pointing away from nearby turtles for separation
+; Calculate vector pointing away from nearby turtles for separation
 to calculate-separation-vector
   let nearby-turtles turtles in-radius separation-radius
   ifelse any? nearby-turtles [
     let x-offsets mean [xcor - [xcor] of myself] of nearby-turtles
     let y-offsets mean [ycor - [ycor] of myself] of nearby-turtles
+
+    ; Check if the offsets result in a zero vector
     ifelse x-offsets = 0 and y-offsets = 0 [
-      set separation-vector heading ; If offsets are 0, maintain current heading
+      set separation-vector heading  ; Maintain current heading if centered among nearby turtles
     ][
-      set separation-vector (atan x-offsets y-offsets) + 180 ; Adjust direction to point away
+      ; Calculate vector pointing away from the average position of nearby turtles
+      set separation-vector (atan x-offsets y-offsets) + 180
     ]
   ][
-    set separation-vector heading
+    set separation-vector heading  ; Maintain current heading if no nearby turtles
   ]
 end
 
-; Update the turtle's heading based on the weighted average of alignment, cohesion, and separation
+; Update turtle's heading based on weighted average of behavior vectors
 to update-heading
   let align-component item 0 heading-weight * align-vector
   let cohesion-component item 1 heading-weight * cohesion-vector
@@ -94,22 +100,13 @@ to update-heading
 end
 
 to move
-  ;; Move forward by 1 step
-  fd 1
-  ;; Wrap horizontally
-  if xcor > max-pxcor [
-    set xcor min-pxcor + (xcor - max-pxcor - 1)
-  ]
-  if xcor < min-pxcor [
-    set xcor max-pxcor - (min-pxcor - xcor - 1)
-  ]
-  ;; Wrap vertically
-  if ycor > max-pycor [
-    set ycor min-pycor + (ycor - max-pycor - 1)
-  ]
-  if ycor < min-pycor [
-    set ycor max-pycor - (min-pycor - ycor - 1)
-  ]
+  fd 1  ; Move forward by 1 step
+
+  ; Wrap around the edges of the world
+  if xcor > max-pxcor [ set xcor min-pxcor + (xcor - max-pxcor - 1) ]
+  if xcor < min-pxcor [ set xcor max-pxcor - (min-pxcor - xcor - 1) ]
+  if ycor > max-pycor [ set ycor min-pycor + (ycor - max-pycor - 1) ]
+  if ycor < min-pycor [ set ycor max-pycor - (min-pycor - ycor - 1) ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
