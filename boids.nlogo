@@ -17,10 +17,10 @@ to setup
 
   ; Initialize simulation parameters
   set num-turtles 400
-  set alignment-radius 12  ; Larger radius to encourage more widespread alignment
-  set cohesion-radius 12   ; Larger radius to encourage group cohesion
-  set separation-radius 2.4 ; Smaller radius for separation to avoid crowding
-  set heading-weight [6 1 1]  ; Strongly emphasize alignment and cohesion
+  set alignment-radius 2  ; Larger radius to encourage more widespread alignment
+  set cohesion-radius 2   ; Larger radius to encourage group cohesion
+  set separation-radius 1 ; Smaller radius for separation to avoid crowding
+  set heading-weight [2 1 1]  ; Strongly emphasize alignment and cohesion
 
   ; Create turtles at random positions and headings
   create-turtles num-turtles [
